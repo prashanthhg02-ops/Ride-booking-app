@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VelocityRide - Premium Ride Booking Simulation</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Control Panel -->
+        <aside class="sidebar">
+            <!-- Header Brand -->
+            <header class="app-header">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>VelocityRide</span>
+                </div>
+                <div class="subtitle">Seamless Urban Mobility</div>
+            </header>
+
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="book">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Book
+                </button>
+                <button class="tab-btn" data-tab="status" id="status-tab-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Live Trip
+                </button>
+                <button class="tab-btn" data-tab="history">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    History
+                </button>
+            </nav>
+
+            <!-- Main Panel Content -->
+            <main class="panel-content">
+                
+                <!-- TAB 1: Booking Flow -->
+                <div class="tab-pane active" id="tab-book">
+                    <div class="step-card">
+                        <h3>1. Select Routes</h3>
+                        <p class="step-guide">Click locations on the map or select from quick links.</p>
+                        
+                        <div class="location-inputs">
+                            <div class="input-group">
+                                <span class="dot pickup-dot"></span>
+                                <input type="text" id="pickup-input" placeholder="Set pickup on map..." readonly>
+                                <button class="clear-btn" id="clear-pickup" title="Clear pickup">×</button>
+                            </div>
+                            <div class="connector-line"></div>
+                            <div class="input-group">
+                                <span class="dot dropoff-dot"></span>
+                                <input type="text" id="dropoff-input" placeholder="Set dropoff on map..." readonly>
+                                <button class="clear-btn" id="clear-dropoff" title="Clear dropoff">×</button>
+                            </div>
+                        </div>
+
+                        <div class="quick-locations">
+                            <span>Popular:</span>
+                            <button class="quick-loc-btn" data-lat="37.7749" data-lng="-122.4194" data-name="Civic Center">Civic Center</button>
+                            <button class="quick-loc-btn" data-lat="37.8080" data-lng="-122.4177" data-name="Fisherman's Wharf">Fisherman's Wharf</button>
+                            <button class="quick-loc-btn" data-lat="37.7879" data-lng="-122.4074" data-name="Union Square">Union Square</button>
+                        </div>
+                    </div>
+
+                    <div class="step-card" id="ride-selection-card" style="opacity: 0.5; pointer-events: none;">
+                        <h3>2. Choose Ride Class</h3>
+                        
+                        <div class="ride-options">
+                            <!-- Economy Card -->
+                            <div class="ride-card active" data-type="Economy">
+                                <div class="ride-info">
+                                    <div class="ride-name-row">
+                                        <span class="ride-name">Economy</span>
+                                        <span class="ride-price" id="price-economy">$0.00</span>
+                                    </div>
+                                    <div class="ride-desc">Toyota Prius or similar • 4 min</div>
+                                </div>
+                                <div class="ride-badge">Popular</div>
+                            </div>
+
+                            <!-- Comfort Card -->
+                            <div class="ride-card" data-type="Comfort">
+                                <div class="ride-info">
+                                    <div class="ride-name-row">
+                                        <span class="ride-name">Comfort</span>
+                                        <span class="ride-price" id="price-comfort">$0.00</span>
+                                    </div>
+                                    <div class="ride-desc">Honda CR-V or similar • 3 min</div>
+                                </div>
+                            </div>
+
+                            <!-- Premium Card -->
+                            <div class="ride-card" data-type="Premium">
+                                <div class="ride-info">
+                                    <div class="ride-name-row">
+                                        <span class="ride-name">Premium</span>
+                                        <span class="ride-price" id="price-premium">$0.00</span>
+                                    </div>
+                                    <div class="ride-desc">Tesla Model 3 or BMW • 2 min</div>
+                                </div>
+                                <div class="ride-badge gold">Premium</div>
+                            </div>
+                        </div>
+
+                        <!-- Route Stats Summary -->
+                        <div class="route-stats">
+                            <div class="stat-item">
+                                <span class="stat-lbl">Distance</span>
+                                <span class="stat-val" id="stat-dist">0.0 mi</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-lbl">Duration</span>
+                                <span class="stat-val" id="stat-time">0 min</span>
+                            </div>
+                        </div>
+
+                        <button id="book-btn" class="btn-primary" disabled>Request Ride</button>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Live Status Simulation -->
+                <div class="tab-pane" id="tab-status">
+                    <!-- State A: Matching Driver -->
+                    <div id="status-matching" class="status-subpane active">
+                        <div class="loading-animation">
+                            <div class="sonar-wave"></div>
+                            <div class="sonar-dot">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 2v20M2 12h20"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 class="status-headline">Matching with Drivers</h2>
+                        <p class="status-tagline">Searching for available vehicles nearby...</p>
+                        
+                        <div class="booking-summary-card">
+                            <div class="booking-row">
+                                <span>Class:</span> <strong id="summary-class">Economy</strong>
+                            </div>
+                            <div class="booking-row">
+                                <span>Estimated Fare:</span> <strong id="summary-fare">$0.00</strong>
+                            </div>
+                        </div>
+                        <button class="btn-secondary" id="cancel-matching-btn">Cancel Request</button>
+                    </div>
+
+                    <!-- State B: Driver En Route & Driving to Destination -->
+                    <div id="status-active-trip" class="status-subpane">
+                        <div class="trip-status-header">
+                            <div class="status-badge" id="trip-badge">Driver Accepted</div>
+                            <div class="eta-container">
+                                <span class="eta-lbl" id="eta-label">ETA</span>
+                                <span class="eta-val" id="trip-eta">3 mins</span>
+                            </div>
+                        </div>
+
+                        <!-- Route progress bar -->
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="trip-progress"></div>
+                        </div>
+
+                        <!-- Driver Info Card -->
+                        <div class="driver-card">
+                            <div class="driver-avatar-col">
+                                <div class="driver-avatar">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                                <div class="driver-rating">
+                                    <span class="star">★</span>
+                                    <span id="driver-rating-val">4.9</span>
+                                </div>
+                            </div>
+                            <div class="driver-info-col">
+                                <h4 id="driver-name-val">John Doe</h4>
+                                <p id="driver-car-val">Tesla Model 3</p>
+                                <span class="license-plate" id="driver-plate-val">SF-RIDE1</span>
+                            </div>
+                        </div>
+
+                        <!-- Trip details -->
+                        <div class="trip-locations-list">
+                            <div class="trip-location-item">
+                                <span class="dot pickup-dot"></span>
+                                <div>
+                                    <div class="loc-title">Pickup</div>
+                                    <div class="loc-name" id="trip-pickup-name">123 Market St</div>
+                                </div>
+                            </div>
+                            <div class="trip-location-item">
+                                <span class="dot dropoff-dot"></span>
+                                <div>
+                                    <div class="loc-title">Destination</div>
+                                    <div class="loc-name" id="trip-dropoff-name">Fisherman's Wharf</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-secondary" id="cancel-active-btn">Cancel Ride</button>
+                    </div>
+
+                    <!-- State C: Trip Completed -->
+                    <div id="status-completed" class="status-subpane">
+                        <div class="success-icon-container">
+                            <div class="success-ring"></div>
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <h2 class="status-headline">Arrived at Destination!</h2>
+                        <p class="status-tagline">Thank you for riding with VelocityRide.</p>
+
+                        <!-- Invoice details -->
+                        <div class="receipt-card">
+                            <div class="receipt-title">Payment Receipt</div>
+                            <div class="receipt-divider"></div>
+                            <div class="receipt-row">
+                                <span>Base Fare</span>
+                                <span id="receipt-base">$0.00</span>
+                            </div>
+                            <div class="receipt-row">
+                                <span>Platform Fee</span>
+                                <span>$1.50</span>
+                            </div>
+                            <div class="receipt-divider"></div>
+                            <div class="receipt-row total">
+                                <span>Total Paid</span>
+                                <span id="receipt-total">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Rating interaction -->
+                        <div class="rating-box">
+                            <p>Rate your driver</p>
+                            <div class="stars" id="star-rating">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary" id="new-ride-btn">Book Another Ride</button>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Ride History -->
+                <div class="tab-pane" id="tab-history">
+                    <h3>Ride History</h3>
+                    <p class="step-guide">Your past trips and transactions on VelocityRide.</p>
+                    
+                    <div class="history-list" id="history-container">
+                        <!-- Dynamically filled history list -->
+                        <div class="empty-state">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <p>No trips booked yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </aside>
+
+        <!-- Map Container -->
+        <section class="map-container-wrap">
+            <!-- Map Help Hint Overlay -->
+            <div class="map-hint" id="map-hint-overlay">
+                <span class="hint-pulse"></span>
+                <span id="hint-text">Click anywhere on the map to set your <strong>Pickup Location</strong></span>
+            </div>
+            
+            <div id="map"></div>
+        </section>
+    </div>
+
+    <!-- Leaflet.js Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- App Logic script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
